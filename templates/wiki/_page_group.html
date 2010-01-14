@@ -1,0 +1,31 @@
+{% load wiki %}
+{% load goodtimes %}
+<ol class="pagelist">
+  {% for page in page_set %}
+  <li>
+    <a href="{% wiki_url 'page' page %}" class="emphasis">{% wiki_title page.current_version %}</a>    
+    <div class="pagelist-contents">
+      <div>
+        {% if show_last_edit_time and show_last_edit_user %}
+          {% wiki_snippet page.current_version 70 %}
+        {% else %}
+          {% wiki_snippet page.current_version 80 %}
+        {% endif %}
+        {% if show_last_edit_time %}
+          <span class="help">{{ page.modified_on|goodtimes }}</span>
+        {% endif %}
+        {% if show_last_edit_user %}
+          <span class="help">by</span>
+          {% wiki_linked_user page '' %}
+        {% endif %}
+      </div>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+<script type="text/javascript">
+$("a.bestoftoggle").click(function(e){
+  e.preventDefault();
+  $(this.parentNode).children().filter('.bestof').toggle();
+})
+</script>

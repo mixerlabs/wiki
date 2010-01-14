@@ -1,0 +1,347 @@
+{% extends 'wiki/wikibase.html' %}
+
+{% load wiki %}
+{% load static %}
+
+{% block media %}
+{{ block.super }}
+<link rel="stylesheet" type="text/css" href="{% static_url js/markitup/skins/wiki/style.css %}" />
+<link rel="stylesheet" type="text/css" href="{% static_url js/markitup/sets/wiki/style.css %}" />
+
+<script type="text/javascript" src="{% static_url js/markitup/jquery.markitup.js %}"></script>
+<script type="text/javascript" src="{% static_url js/markitup/sets/wiki/set.js %}"></script>
+<script type="text/javascript" src="{% static_url js/jquery.ext.js %}"></script>
+<script type="text/javascript" src="{% static_url js/jquery-fieldselection.pack.js %}"></script>
+
+<script type="text/javascript" src="{% static_url js/thickbox-compressed.js %}"></script>
+<link rel="stylesheet" href="{% static_url css/thickbox.css %}" type="text/css" media="screen" />
+
+{% if not preview %}
+<style>
+#wiki-edit { display: none; }
+</style>
+{% endif %}
+
+{% endblock %}
+
+{% block head_title %}
+Edit "{% wiki_title vsn %}"
+{% endblock %}
+
+{% block content %}
+
+<script type="text/javascript">
+  {% comment %}
+    This prevents IE from displaying a large block of emptiness.
+  {% endcomment %}
+  $('#pagetitlebar').hide()
+  
+  var selection_range = null;
+  var selection_bookmark = null;
+  function capture_selection() {
+    // IE only
+    if (document.selection) {
+    {% ifequal form.form_type "plain-text" %}
+      selection_range = document.selection.createRange();
+      selection_bookmark = selection_range.getBookmark();
+    {% else %}
+      selection_range = tinyMCE.get("id_body").selection.getRng()
+    {% endifequal %}
+    }
+  }
+  
+  function restore_selection() {
+    // IE only
+    if (document.selection) {
+    {% ifequal form.form_type "plain-text" %}
+      if (selection_range && selection_bookmark) {
+        selection_range.moveToBookmark(selection_bookmark);
+        selection_range.select();
+      }
+    {% else %}
+      if (selection_range) {
+        tinyMCE.get("id_body").selection.setRng(selection_range);
+      }
+    {% endifequal %}
+    }
+  }
+
+  function wiki_insert_image(ed) {
+    capture_selection();
+    $.mixerbox("{% wiki_url 'upload_photo_dialog' vsn.page %}", "imguploader");
+  }
+
+  function wiki_insert_link(ed) {
+    capture_selection();
+    text = selected_text();
+    $.mixerbox("{% wiki_url 'add_link_inline' vsn.page %}?KeepThis=true&TB_iframe=true&height=400&width=600&selection="+escape(text));
+  }
+
+  function wiki_switch_editor(ed) {
+    {% ifequal form.form_type "plain-text" %}
+      $("#wiki-edit").attr("action", "{% wiki_url 'edit' vsn.page %}?richtext");
+    {% else %}
+      $("#wiki-edit").attr("action", "{% wiki_url 'edit' vsn.page %}?plaintext");
+    {% endifequal %}
+    $("#wiki-edit").submit();
+  }
+
+  function done_uploading(markup, html) {
+    restore_selection()
+    $.mixerbox.close();
+    {% ifequal form.form_type "plain-text"  %}
+      $("#id_body").insertAtCaret(markup);
+    {% else %}
+      tinyMCE.execCommand('mceInsertContent', false, html);
+    {% endifequal %}
+  }
+
+  function selected_text(){
+    {% ifequal form.form_type "plain-text"  %}
+      range = $("#id_body").getSelection();
+      text = range.text;
+    {% else %}
+      text = tinyMCE.get("id_body").selection.getContent();
+    {% endifequal %}
+      return text;    
+  }
+
+  function selected_link(slug, href, title) {
+      restore_selection()
+      tb_remove();
+
+      if (!title)
+        title = slug;
+
+      text = selected_text();
+      if (!text || text.length == 0) {
+        text = title;
+      }
+      {% ifequal form.form_type "plain-text"  %}
+        $("#id_body").replaceSelection("[[" + slug + "|" + text + "]]");
+      {% else %}
+        {% if form.workarounds.list_item_linking %}
+          // This is a workaround/hack: strip preceding empty list items
+          // (these can be magically manufactured by TinyMCE it seems).
+          var re = new RegExp(/^(\s*\<li\>\<\/li\>)+\s*\<li\>(.*)\<\/\li\>/);
+          if (text.match(re)) {
+            text = text.replace(re, '<li><a href="' + href + '">$2</a></li>');
+          } else {
+            text = '<a href="' + href + '">' + text + '</a>';
+          }
+        {% else %}
+          text = '<a href="' + href + '">' + text + '</a>';
+        {% endif %}
+
+        tinyMCE.execCommand('mceReplaceContent', false, text);
+      {% endifequal %}
+  }
+  
+  function wiki_cancel() {
+    document.location.href = "{% wiki_url 'page' vsn.page %}";
+  }
+
+  function wiki_publish() {
+    $("#wiki-edit").attr("action", "{% wiki_url 'edit' vsn.page %}?publish");
+    {% if pre_auth %}
+      {% ifequal pre_auth 'login' %}
+        var mb_url = "{% url login_dialog %}"
+      {% else %}
+        var mb_url = "{% url captcha_dialog %}"
+      {% endifequal %}
+      $.mixerbox(mb_url, "captcha", function(post_auth_action) {
+        $("#wiki-post-auth-action").val(post_auth_action)
+        $("#wiki-edit").submit()
+      })
+    {% else %}
+      $("#wiki-edit").submit();    
+    {% endif %}
+  }
+
+  function wiki_preview() {
+    $("#wiki-edit").attr("action", "{% wiki_url 'edit' vsn.page %}?preview");
+    $("#wiki-edit").submit();
+  }
+
+  function wiki_continue_editing() {
+    $("#wiki-edit").attr("action", "{% wiki_url 'edit' vsn.page %}");
+    $("#wiki-edit").submit();
+  }  
+  
+  $(document).ready(function() {
+    {% if not preview %}
+      {% ifequal form.form_type "rich-text"  %}
+      
+      {% else %}
+        $("#id_body").markItUp(mySettings);
+        $("#wiki-spinner").hide();
+        $("#wiki-edit").show();
+      {% endifequal %}
+    {% endif %}
+      
+    {% if post_auth %}
+      {% ifequal post_auth 'login' %}
+        var mb_url = "{% url login_dialog %}"
+      {% else %}
+        var mb_url = "{% url captcha_dialog %}"
+      {% endifequal %}
+      $.mixerbox(mb_url, "captcha", function(post_auth_action) {
+        $("#wiki-post-auth-action").val(post_auth_action)
+        $("#wiki-edit").submit()
+      })
+    {% endif %}      
+  });
+
+{% ifequal form.form_type "rich-text" %}
+
+{% comment %}
+      TODO(marius): Figure out how to integrate this into the form media.
+      From tinymce forums.
+{% endcomment %}
+
+function init_tinymce(instance) {
+  instance.onKeyDown.add(
+  function(ed, e) {
+    if (e.keyCode == 9 && !e.altKey && !e.ctrlKey) {
+      if (e.shiftKey)
+        ed.editorCommands.Outdent();
+      else
+        ed.editorCommands.Indent();
+      return tinymce.dom.Event.cancel(e);
+    }
+  });
+
+  // Hack up the tinymce editor only stuff that's absolutely
+  // necessary without modifying the editor itself.
+  $('#id_body_wiki_switch').removeClass('mceButton');
+  $('#id_body_wiki_switch').html('<span style="color: #0079b1">Edit in Wiki Markup</a>');
+  $('#id_body_wiki_switch').parent().attr('width', '100%');
+  $('#id_body_wiki_switch').parent().css('text-align', 'right');
+
+  $("#wiki-spinner").hide();
+  $("#wiki-edit").show();
+  if ($("#id_title").mixertwiddle_isdefault()) {
+    // Need to do this in a setTimeout here else focus doesn't always take.
+    setTimeout('$("#id_title").focus()', 0)
+  }
+}
+{% endifequal %}
+
+</script>
+{% if not preview %}
+<div id="wiki-spinner" style="margin-top: 75px;">
+  <center>
+    <img src="{% static_url img/loading.gif %}" />
+  </center>
+</div>
+{% endif %}
+
+<form name="wiki_edit" id="wiki-edit" action="" method="post">
+
+{% if preview %}
+    <h1>Preview of "{{ vsn.title }}"</h1>
+    <div class="sections">
+        <div class="section">
+            <div class="sectioncontents wiki">
+                {% wiki_body preview %}
+            </div>
+        </div>
+    </div>
+    {{ form.as_hidden }}
+{% else %}
+    {% for field in form %}
+      {% if field.is_hidden %}
+        {{ field }}
+      {% endif %}
+    {% endfor %}
+
+    <div class="wiki_title_section">
+      {{ form.title }} 
+      {% if form.category.is_hidden %}
+        {{ form.category }}
+      {% else %}
+        <span class="spacer-left">Category: {{ form.category }}</span>
+      {% endif %}
+    </div>
+
+    <div style="clear: both;"></div>
+
+    <div class="wiki_title_section">
+      {{ form.body }}
+    </div>
+
+    {{ form.errors }}
+
+{% endif %}
+
+<div style="clear: both; margin-top: 15px"></div>
+
+    <a class="button-default" href="javascript:wiki_publish()"><span>Publish</span></a>
+{% if not preview %}
+    <a class="button" href="javascript:wiki_preview()"><span>Show preview</span></a>
+    <span style="float: left; width: 45px;">&nbsp;</span>
+    <a class="button" href="javascript:wiki_cancel()"><span>Cancel</span></a>
+{% else %}
+    <a class="button" href="javascript:wiki_continue_editing()"><span>Continue editing</span></a>
+{% endif %}
+
+{% if admin_view %}
+    <a class="button" style="float: right" href="javascript:check_wiki_delete()"><span>Delete</span></a>
+    <div style="display:none">
+      <div id="delete-confirmation">
+        <h1 class="dialog">Are you sure you want to delete this page?</h1>
+        <a class="button" href="javascript:self.parent.wiki_delete(); self.parent.$.mixerbox.close();"><span>Delete</span></a>
+        <a class="button-default" href="javascript:self.parent.$.mixerbox.close();"><span>Cancel</span></a>
+      </div>
+    </div>
+    <script type="text/javascript">
+    function check_wiki_delete() {
+      $.mixerbox({html: $("#delete-confirmation").html()})
+    }
+
+    function wiki_delete() {
+      clear_content();
+      wiki_publish();
+    }
+    function clear_content() {
+      {% ifequal form.form_type "plain-text"  %}
+        $("#id_body").attr("value", "");
+      {% else %}
+        tinyMCE.execCommand('mceSetContent', false, '');
+      {% endifequal %} 
+    }
+    </script>
+{% endif %}
+<input type="hidden" name="post_auth_action" id="wiki-post-auth-action"/>
+
+</form>
+
+{% endblock %}
+
+
+{% block right_content %}
+<div class="section">
+  <div class="sectioncontents">
+  {% if not preview %}
+    {% ifequal form.form_type "plain-text" %}
+      <iframe src="{% static_url wiki-help.html %}" frameborder="0"
+          style="width:100%; height:530px" />
+    {% else %}
+      <div style="margin-left:20px">
+        <h3>Editing Hints:</h3>
+        <ul style="list-style:disc; margin-top:2px">
+          <li>Switch to "Edit in Wiki Markup" for finer control.</li>
+          <li>Images may display differently when published.
+              Use "Show preview" to verify.</li>
+          <li>Please enter original content or content for which you own the copyright,  
+            <a class="mini" href=
+                "javascript:$.mixerbox('{% url terms_dialog %}?scrollto=copyright')">
+                Copyright Policy</a>
+          </li>
+        </ul>
+      </div>
+    {% endifequal %}
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

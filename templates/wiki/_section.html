@@ -1,0 +1,47 @@
+{% load wiki %}
+{% load static %}
+{% load goodtimes %}
+
+{% comment %}
+In the future we may have multiple sections if we split up the wiki.
+{% endcomment %}
+
+{% if city_layout %}
+  created by {% wiki_linked_user page "creator" %}
+  <span class="divider">&nbsp;|&nbsp;</span> 
+  edited 
+  {{ page.current_version.created_at|goodtimes:"1week" }}
+  by
+  {% wiki_linked_user page "last_editor" %}
+  <span class="divider">&nbsp;|&nbsp;</span> 
+  {% wiki_buttons page "history" %}
+  <span class="divider">&nbsp;|&nbsp;</span> 
+  {% wiki_buttons page "edit" %}
+{% else %}
+  <div class="section">
+    <div class="titlebar">
+      <div class="stripes">
+        <div class="stripe">
+          <div class="stripecontents">
+            <div class="group"><img src="{% static_url img/icons/32x/about32x.png %}" /></div>
+            <div class="group lh27"><h2>About {{ about }}</h2></div>
+            <div class="group-right spacer-right lh2">
+                <span class="help divider">[</span>
+                <a class="deemphasis" href="{{ page.get_edit_url }}">edit</a>
+  {% if has_history %}
+                <span class="help divider">|</span> 
+                <a class="deemphasis" href="{{ page.get_history_url }}">history</a>
+  {% endif %}
+                <span class="deemphasis help divider">]</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+{% endif %}
+  <div class="sectioncontents wiki">
+    {% wiki_body page.current_version %}
+  </div>
+{% if not city_layout %}
+  </div>
+{% endif %}

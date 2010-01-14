@@ -1,0 +1,161 @@
+{% extends 'wiki/wikibase.html' %}
+
+{% load wiki %}
+{% load context %}
+{% load paginator %}
+
+{% block head_title %}
+{{ title }}
+{% endblock %}
+
+{% block page_title %}
+<div id="pagetitlebar">
+  <div class="stripes">
+    <div class="stripe">
+      <div class="stripecontents">
+        <div class="cleared">
+          {% if category %}
+          <div class="group-label">
+            <a href="{% wiki_category_url wiki_slug category.id %}">
+              <div class="roundedcornerwrap">
+                <div class="rounded6px25x"></div>
+              </div>
+              <img src="{{ category.icon_url }}" border="0"/>
+            </a>
+          </div>
+          {% endif %}
+          <h1 style="width:400px;">{{ title }}</h1>
+          <div class="group-right">
+            <div class="viewchooser">
+              {% ifequal order "title" %}
+              <div class="selected top4"><span>By Title</span></div>
+              {% else %}
+              <a href="?order=title" class="unselected top4"><span>By Title</span></a>
+              {% endifequal %}
+              {% ifequal order "recent" %}
+              <div class="selected top4"><span>Most Recent</span></div>
+              {% else %}
+              <a href="?order=recent" class="unselected top4"><span>Most Recent</span></a>
+              {% endifequal %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+{% endblock %}
+
+{% block upper_right_content %}
+<div class="section">
+  <div class="sectioncontents">
+    <div class="titlebar">
+      <h1>All Page Categories in {{ guid_title }}</h1>
+    </div>
+    <ul>
+      {% for category in categories %}
+			{% if category.count %}
+      <li>
+        <div class="group-label">
+          <a href="{% wiki_category_url wiki_slug category.id %}">
+            <div class="roundedcornerwrap"><div class="rounded6px25x"></div></div>
+            <img src="{{ category.icon_url }}" border="0"/>
+          </a>
+        </div>
+				<a href="{% wiki_category_url wiki_slug category.id %}" class="lh2">{{ category.title }} ({{ category.count }})</a>
+			</li>
+			{% endif %}
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="wiki">
+  <div id="sections">   
+    <div class="section">
+      <div class="sectioncontents">
+      {% if not show_best_ofs %}
+      {% ifequal order "categories" %}
+        <p>These are pages created by the {{ guid_title }} community by category.
+           Feel free to add a page to any category.  
+           Categories with the most, and the most recent, pages appear first.
+        </p>
+        <p><a href="{% url www.wiki.views.directory wiki_slug=wiki_slug %}" class="emphasis">Best in {{ guid_title }}</a></p>
+      {% else %}
+        {% if category %}
+        <p>These are pages created by the {{ guid_title }} community about local <span class="emphasis">{{ category.title }}</span>, 
+           {% ifequal order "title" %}in alphabetical order by title.
+           {% else %}most recent first. 
+           {% endifequal %}
+        </p>
+        {% ifnotequal category.id '__none__' %}
+        <p>Don't see something here? <a href="{% wiki_new_page_url wiki_slug category.id %}">Add a page to this category!</a></p>
+        {% endifnotequal %}
+        <p><a href="{% url www.wiki.views.directory wiki_slug=wiki_slug,category=category.id %}" class="emphasis">Best {{ category.title }} in {{ guid_title }}</a></p>
+        {% else %}
+        <p>These are pages created by the {{ guid_title }} community,
+          {% ifequal order "title" %}in alphabetical order by title.
+          {% else %}most recent first. 
+          {% endifequal %}
+          <p><a href="{% url www.wiki.views.directory wiki_slug=wiki_slug %}" class="emphasis">Best ofs in {{ guid_title }}</a></p>
+        {% endif %}        
+      {% endifequal %}
+      {% endif %}
+      </div>
+    </div>
+  {% if page_paginator and page_paginator_page.object_list %}
+    {% wiki_page_group page_paginator_page.object_list order %}
+    {% paginator_links page_paginator page_paginator_page page_url_template %}
+  {% endif %}
+  {% if show_best_ofs and best_of_paginator and best_of_paginator_page.object_list %}
+    {% wiki_page_group best_of_paginator_page.object_list order %}
+    {% paginator_links best_of_paginator best_of_paginator_page best_of_url_template %}
+  {% endif %}
+  {% if category_paginator and category_paginator_page.object_list %}
+    {% for category in category_paginator_page.object_list %}
+      <div class="section">
+        <div class="titlebar">
+          <div class="stripes">
+            <div class="stripe">
+              <div class="stripecontents">
+                <div class="group-label">
+                  <a href="{% wiki_category_url wiki_slug category.id %}">
+                    <div class="roundedcornerwrap">
+                      <div class="rounded6px25x"></div>
+                    </div>
+                    <img src="{{ category.icon_url }}" border="0"/>
+                  </a>
+                </div>
+                <div class="group lh2">
+                  <a href="{% wiki_category_url wiki_slug category.id %}">
+                    <h2>{{ category.title }}</h2>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="sectioncontents">
+          {% wiki_page_group category.pages order %}
+          <div id="actions">
+            <div class="group mini indent25">
+              <a href="{% wiki_category_url wiki_slug category.id %}">See all &raquo;</a>
+            {% ifnotequal category.id '__none__' %}
+              <span class="divider help">|</span>
+              <a href="{% wiki_new_page_url wiki_slug category.id %}">Create a page in "{{ category.title }}"</a>
+            {% endifnotequal %}
+            </div>
+          </div>
+        </div><!-- end section contents -->
+      </div><!--end section -->
+    {% endfor %}
+    {% paginator_links category_paginator category_paginator_page category_url_template %}
+  {% endif %}
+	
+    
+  </div>
+</div>
+{% endblock %}

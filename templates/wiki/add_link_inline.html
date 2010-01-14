@@ -1,0 +1,110 @@
+{% extends "dialog_base.html" %}
+
+{% block content %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    $(".recent-link").click(function(event) {
+      event.preventDefault();
+      self.parent.selected_link(
+        this.getAttribute('_mixerlabs_wiki_slug'), 
+        this.getAttribute('_mixerlabs_abs_url'), 
+        this.innerHTML);
+      self.parent.$.mixerbox.close();
+    });
+    $("#url-link-button").click(function() {
+      var href = jQuery.trim($("#url-link-input").val());
+      if (href.toLowerCase().indexOf('http://') != 0) {
+        href = 'http://' + href;
+      }
+      self.parent.selected_link(href, href);
+      self.parent.$.mixerbox.close();
+    });
+    $("#new-page-button").click(function() {
+      document.newpage.submit()
+      return false;
+    });
+
+  {% if form_href %}
+    $(document).ready(function() {
+      self.parent.selected_link("{{ form_slug }}", "{{ form_href }}", "{{ form_title }}");
+      self.parent.$.mixerbox.close();
+    });
+  {% endif %}
+  
+  });
+</script>
+<h1 class="dialog">Insert a Link</h1>
+<div class="stripes">
+  <div class="stripe">
+    <div class="stripecontents">
+      <h2 class="dialog">Select a recent page:</h2>
+      <p>
+      {% for page in paginator.object_list %}
+      <a href="" 
+        class="recent-link" 
+        _mixerlabs_abs_url="{{ page.get_absolute_url }}"
+        _mixerlabs_wiki_slug="{{ page.slug }}">
+        {% firstof page.title page.slug %}
+      </a>
+      {% if not forloop.last %}<span class="linkspacer">, </span>{% endif %}
+      {% endfor %}
+      </p>
+      {% if paginator.has_previous %}
+      <a href="?page={{ paginator.previous_page_number }}">&laquo; previous</a>
+      {% endif %}
+
+      {% if paginator.has_next %}
+      <a href="?page={{ paginator.next_page_number }}">next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="stripe-alt">
+    <div class="stripecontents">
+      <table class="dialogform">
+        <tr>
+          <td colspan="3">
+          <h2 class="dialog">Link to a URL:</h2>
+          </td>
+        </tr>
+        <tr>
+          <td width="15%" style="text-align:right;">http://</td>
+          <td>
+            <div width="*" class="inputgroup">
+              <input id="url-link-input" type="text" value="{{ link_url }}" />
+            </div></td>
+          <td width="25%">
+            <div class="group">
+              <a href="" id="url-link-button" class="button">
+                <span>InsertLink</span>
+              </a>
+            </div></td>
+        </tr>
+      </table>
+    </div>    
+  </div>   
+  <div class="stripe">
+    <div class="stripecontents">
+      <form name="newpage" action="" method="post">
+        <table class="dialogform">
+          <tr>
+            <td colspan="3">
+              <h2 class="dialog">Create a new page and link to it:</h2>
+            </td>
+          </tr>
+          <tr>
+            <td width="15%" style="text-align:right;">Name:</td>
+            <td><div class="inputgroup">{{ form.name }}</div></td>
+            <td width="25%">
+              <div class="group">
+                <a href="" id="new-page-button" class="button">
+                  <span>Create&nbsp;Page</span>
+                </a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </form>
+    </div>    
+  </div>      
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block media %}
+{{ block.super }}
+<script type="text/javascript" src="{% static_url js/jquery.autogrow.js %}"></script>
+<script type="text/javascript" src="{% static_url js/reviews.js %}"></script>
+
+{% include "../../feedback/templates/feedback/scripts.html" %}
+
+{% endblock %}

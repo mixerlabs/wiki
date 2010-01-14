@@ -1,0 +1,17 @@
+{% extends 'wiki/wikibase.html' %}
+
+{% load context %}
+
+{% block head_title %}
+Create a Page about {% context_location %}
+{% endblock %}
+
+{% block content %}
+
+    <h1>Create Page</h1>
+    <form action="" method="post">
+      {{ form.as_p }}
+    <input type="submit" value="Create!" />
+    </form>
+
+{% endblock %}

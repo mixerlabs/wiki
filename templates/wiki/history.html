@@ -1,0 +1,81 @@
+{% extends 'wiki/wikibase.html' %}
+{% load humanize %}
+{% load wiki %}
+{% load goodtimes %}
+{% load user %}
+{% load widgets %}
+
+{% block head_title %}
+Revision History of "{% wiki_title page.current_version %}"
+{% endblock %}
+
+{% block content %}
+
+<script type="text/javascript">
+  var from = null;
+
+  $(document).ready(function() {
+    $("a.sel").click(function() {
+      if (!from) {
+        from = $(this).attr('id');
+        $(this).text('from');
+      } else {
+        to = $(this).attr('id');
+        {% widget_call widget "resolvediffurl" %}
+          {fromvsn: from, tovsn: to}
+        {% widget_callback data %}
+          window.location.href = data;
+        {% endwidget_call %}
+      }
+    });
+  });
+
+</script>
+
+    <h1>History for {% wiki_title page.current_version %}</h1>
+
+
+    {% comment %}
+    grr. there's got to be a better way of doing the following.. 
+    {% endcomment %}
+
+    {% if paginator.has_previous %}
+    <a href="?page={{ paginator.previous_page_number }}">&lt;</a>
+    {% else %}
+    &lt;
+    {% endif %}
+
+    {% if paginator.has_next %}
+    <a href="?page={{ paginator.next_page_number }}">&gt;</a>
+    {% else %}
+    &gt;
+    {% endif %}
+
+    <form>
+
+    <table>
+      {% for vsn in paginator.object_list %}
+
+      <tr>
+        <td>
+            {{ vsn.version }};
+            {{ vsn.get_user_and_ip|linked_user_or_ip }}
+            {% if vsn.get_user_and_ip.0 %}
+                | <a href="javascript:send_message('{{ vsn.get_user_and_ip.0.username|escapejs }}', '{{ vsn.page.title|escapejs }}', '{{ vsn.page.get_absolute_url|escapejs }}')">
+                send message</a>            
+            {% endif %} ;
+            {{ vsn.created_at|goodtimes }};
+            {{ vsn.comment }}
+            &middot; <a href="{{ vsn.get_absolute_url }}">view</a>
+            &middot; <a class="sel" id="{{ vsn.version }}" href="javascript:void">select</a>
+        </td>
+      </tr>
+
+      {% endfor %}
+    </table>
+
+    </form>
+
+{% wiki_buttons page "view,edit" %}
+
+{% endblock %}

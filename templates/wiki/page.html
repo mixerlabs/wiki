@@ -1,0 +1,92 @@
+{% extends 'wiki/wikibase.html' %}
+
+{% load wiki %}
+{% load context %}
+{% load goodtimes %}
+{% load thumb %}
+
+{% block head_title %}
+{% wiki_title page.current_version %} - {% context_location %}
+{% endblock %}
+
+{% block title %}
+{% wiki_title page.current_version %}
+{% endblock %}
+
+{% block help_mini %}
+{% if page.has_version %}
+    <div class="help mini">
+        created by {% wiki_linked_user page "creator" %}
+        <span class="divider">&nbsp;|&nbsp;</span> 
+        edited 
+        {{ page.current_version.created_at|goodtimes:"1week" }}
+        by
+        {% wiki_linked_user page "last_editor" %}
+        <span class="divider">&nbsp;|&nbsp;</span> 
+        {% wiki_buttons page "history" %}
+        <span class="divider">&nbsp;|&nbsp;</span> 
+        {% wiki_buttons page "edit" %}
+
+        {% if page.current_version.category %}
+          <p>
+            category: 
+            <a href="{% wiki_category_url page.wiki.slug page.category %}">
+              {{ page.category_title }}
+            </a>
+          </p>
+        {% endif %}
+
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block upper_right_content %}
+
+{% with page as fb_obj %}
+  {% with "What Do You Think About This Page?" as fb_title %}
+    {% include "feedback/page.html" %}
+  {% endwith %}
+{% endwith %}
+
+{% if related %}
+  <div class="section">
+    <div class="sectioncontents">
+      <div class="titlebar">
+        <h1>Related Pages</h1>
+      </div>
+      <ul>
+        {% for page in related %}
+          <li class="roundedpix">
+            <div class="group-label">
+              {% obj_thumb page %}
+            </div>
+            <div class="group-short fixed260 help">
+              <div>
+                <a href="{{ page.get_absolute_url }}">{{ page.title }}</a>
+              </div>
+              <div class="mini">
+                {% wiki_snippet page.current_version 50 %}
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+
+{% block content %}
+
+<div class="sections">
+    <div class="section">
+        <div class="sectioncontents wiki">
+            {% wiki_body page.current_version %}
+        </div>
+    </div>
+</div>
+
+{% include "reviews.html" %}
+
+{% endblock %}

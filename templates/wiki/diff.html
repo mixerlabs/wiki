@@ -1,0 +1,20 @@
+{% extends 'wiki/wikibase.html' %}
+{% load wiki %}
+
+{% block content %}
+
+{{ fromsvn.title }}
+
+
+
+<h1>
+{% ifnotequal fromvsn.title tovsn.title %}
+<del>{{ fromvsn.title }}</del> 
+{% endifnotequal %}
+{{ tovsn.title }} </h1>
+
+{% wiki_diff fromvsn tovsn %}
+
+{% wiki_buttons page "view,edit,history" %}
+
+{% endblock %}

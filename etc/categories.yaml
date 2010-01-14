@@ -1,0 +1,75 @@
+shopping-and-services:
+  title: Shopping & Services
+  icon: shopping
+
+food-and-drink:
+  title: Food & Drink
+  icon: food
+
+sports-and-recreation:
+  title: Sports & Recreation
+  icon: sports
+
+groups-or-organizations:
+  title: Groups & Organizations
+  icon: groups
+
+places-and-points-of-interest:
+  title: Places & Points of Interest
+  icon: places
+
+arts-and-music:
+  title: Arts & Music
+  icon: musicarts
+
+events:
+  title: Events
+  icon: events
+
+misc:
+  title: Misc.
+  icon: misc
+
+government-and-city-data:
+  title: Government & City Data
+  icon: govt
+
+universities-and-higher-ed:
+  title: Universities & Higher Ed
+  icon: univ
+
+kids-and-parenting:
+  title: Kids & parenting
+  icon: family
+
+people:
+  title: People
+  icon: people
+
+media:
+  title: Media
+  icon: media
+  
+health:
+  title: Health
+  icon: health
+
+tourism:
+  title: Tourism
+  icon: tourism
+
+nightlife:
+  title: Nightlife
+  icon: nightlife
+
+deals-and-discounts:
+  title: Deals & Discounts
+  icon: deals
+
+religious-and-spiritual:
+  title: Religious & Spiritual
+  icon: spiritual
+
+__none__:
+  title: Uncategorized
+  icon: uncat

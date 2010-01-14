@@ -1,0 +1,43 @@
+{% extends 'wiki/wikibase.html' %}
+
+{% block head_title %}
+This Page Doesn't Exist Yet
+{% endblock %}
+
+{% block title %}
+Create This Page!
+{% endblock %}
+
+{% block content %}
+
+<div class="wiki">
+  <div id="sections">
+    <div class="section">
+      <div class="sectioncontents">
+	<h2>{{ title|escape }} doesn't exist yet. Do you want to create it?</h2>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="sectioncontents">
+        <p class="help">If you hit "Create This Page," you'll be creating a new page with this title (you can modify it if you misspelled it).</p>
+        <p class="help">If you didn't mean to create this page, you can hit just hit cancel :)</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  function wiki_create() {
+    document.location.href = "{% url wiki_new_page wiki_slug=wiki_slug %}?title={{ slug|urlencode }}"
+  }
+</script>
+
+<div id="pageactions">
+  <div class="group">
+    <a href="javascript:wiki_create()" class="button-default"><span>Create This Page</span></a>
+    <a href="/" class="button"><span>Cancel</span></a>
+  </div>
+</div>
+
+{% endblock %}
